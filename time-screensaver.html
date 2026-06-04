@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fullscreen Time Screensaver</title>
+  <style>
+    :root {
+      color-scheme: dark light;
+      --bg: #000;
+      --fg: #fff;
+      --muted: rgba(255, 255, 255, 0.68);
+      --panel: rgba(255, 255, 255, 0.08);
+      --border: rgba(255, 255, 255, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body.light {
+      --bg: #fff;
+      --fg: #000;
+      --muted: rgba(0, 0, 0, 0.64);
+      --panel: rgba(0, 0, 0, 0.06);
+      --border: rgba(0, 0, 0, 0.18);
+    }
+
+    .screen {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 100vw;
+      height: 100vh;
+      background: var(--bg);
+      color: var(--fg);
+      cursor: default;
+      user-select: none;
+    }
+
+    .time {
+      margin: 0;
+      color: var(--fg);
+      font-size: clamp(4.5rem, 17vw, 19rem);
+      font-weight: 700;
+      line-height: 0.9;
+      letter-spacing: 0;
+      font-variant-numeric: tabular-nums;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .date {
+      position: fixed;
+      top: clamp(1rem, 2vw, 2rem);
+      right: clamp(1rem, 2vw, 2rem);
+      color: var(--fg);
+      font-size: clamp(1rem, 2.1vw, 2rem);
+      font-weight: 600;
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .controls {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      transform: translateX(-50%);
+      backdrop-filter: blur(14px);
+    }
+
+    button {
+      min-height: 42px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0 16px;
+      background: transparent;
+      color: var(--fg);
+      font: 700 0.92rem/1 Arial, Helvetica, sans-serif;
+      cursor: pointer;
+    }
+
+    button[aria-pressed="true"] {
+      background: var(--fg);
+      color: var(--bg);
+    }
+
+    .hint {
+      position: fixed;
+      left: 24px;
+      bottom: 24px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.35;
+    }
+
+    :fullscreen .controls,
+    :fullscreen .hint {
+      display: none;
+    }
+
+    body.is-fullscreen .controls,
+    body.is-fullscreen .hint {
+      display: none;
+    }
+
+    @media (max-width: 680px) {
+      .time {
+        font-size: clamp(3.2rem, 18vw, 7rem);
+      }
+
+      .date {
+        top: 16px;
+        right: 16px;
+        font-size: 1rem;
+      }
+
+      .controls {
+        right: 12px;
+        bottom: 12px;
+        left: 12px;
+        justify-content: center;
+        transform: none;
+      }
+
+      button {
+        flex: 1;
+        padding: 0 10px;
+      }
+
+      .hint {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="screen" id="screen" aria-label="Fullscreen clock">
+    <div class="date" id="date">Friday, 2026-04-01</div>
+    <h1 class="time" id="time">00:00:00</h1>
+
+    <div class="controls" aria-label="Clock display controls">
+      <button type="button" id="darkBtn" aria-pressed="true">Black</button>
+      <button type="button" id="lightBtn" aria-pressed="false">White</button>
+      <button type="button" id="fullscreenBtn">Fullscreen</button>
+    </div>
+
+    <div class="hint">Press F or click Fullscreen. Press Esc to exit.</div>
+  </main>
+
+  <script>
+    const screenEl = document.getElementById("screen");
+    const timeEl = document.getElementById("time");
+    const dateEl = document.getElementById("date");
+    const darkBtn = document.getElementById("darkBtn");
+    const lightBtn = document.getElementById("lightBtn");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
+
+    const weekdayFormatter = new Intl.DateTimeFormat("en-US", { weekday: "long" });
+
+    function pad(value) {
+      return String(value).padStart(2, "0");
+    }
+
+    function updateClock() {
+      const now = new Date();
+      timeEl.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+      dateEl.textContent = `${weekdayFormatter.format(now)}, ${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    }
+
+    function setTheme(theme) {
+      const useLight = theme === "light";
+      document.body.classList.toggle("light", useLight);
+      darkBtn.setAttribute("aria-pressed", String(!useLight));
+      lightBtn.setAttribute("aria-pressed", String(useLight));
+    }
+
+    async function enterFullscreen() {
+      if (!document.fullscreenElement && screenEl.requestFullscreen) {
+        await screenEl.requestFullscreen();
+      }
+    }
+
+    darkBtn.addEventListener("click", () => setTheme("dark"));
+    lightBtn.addEventListener("click", () => setTheme("light"));
+    fullscreenBtn.addEventListener("click", enterFullscreen);
+
+    document.addEventListener("fullscreenchange", () => {
+      document.body.classList.toggle("is-fullscreen", Boolean(document.fullscreenElement));
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key.toLowerCase() === "f") {
+        enterFullscreen();
+      }
+    });
+
+    updateClock();
+    setInterval(updateClock, 250);
+  </script>
+</body>
+</html>

@@ -62,4 +62,4 @@ All code lives in [time-screensaver.html](time-screensaver.html). Common changes
 
 ## License
 
-No license file is currently included. Add one before distributing or reusing this project publicly.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
